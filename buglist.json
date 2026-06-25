@@ -93,5 +93,10 @@
         "timestamp": "2026-06-25 06:18:25",
         "tool": "Recon-ng",
         "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'recon-ng']' returned non-zero exit status 1."
+    },
+    {
+        "timestamp": "2026-06-25 06:21:24",
+        "tool": "theHarvester [Expansion]",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'theHarvester.py', '--help']' returned non-zero exit status 2."
     }
 ]
