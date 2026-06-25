@@ -128,5 +128,10 @@
         "timestamp": "2026-06-25 06:34:01",
         "tool": "theHarvester [Expansion]",
         "error": "Command '['/data/data/com.termux/files/usr/bin/python', '-m', 'theHarvester.__main__', '-h']' returned non-zero exit status 1."
+    },
+    {
+        "timestamp": "2026-06-25 06:34:12",
+        "tool": "Sherlock [Expansion]",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', '-m', 'sherlock_project', '--help']' returned non-zero exit status 1."
     }
 ]
