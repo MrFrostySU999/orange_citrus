@@ -1,0 +1,20 @@
+[
+    {
+        "id": "CVE-2024-0044",
+        "desc": "Android Framework path traversal flaw allowing sandbox bypass.",
+        "size": "3.4 KB",
+        "usage": "python3 exploit.py --target <ip> --payload reverse_tcp"
+    },
+    {
+        "id": "CVE-2025-FIRESTICK",
+        "desc": "Generic active threat vector target array for firestick modules.",
+        "size": "11.4 KB",
+        "usage": "msfconsole -x 'use exploit/multi/http/cve-2025-firestick; set RHOSTS <target>'"
+    },
+    {
+        "id": "CVE-2023-40088",
+        "desc": "Android System remote code execution exploit vector over Bluetooth.",
+        "size": "14.4 KB",
+        "usage": "nmap --script exploit -p 80,443,8080 --script-args vuln.cve=CVE-2023-40088 <target>"
+    }
+]

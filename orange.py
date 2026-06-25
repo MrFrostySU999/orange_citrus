@@ -1,35 +1,31 @@
-#!/usr/bin/env python3
-import os, sys, shutil
-from config import PURPLE, YELLOW, WHITE, CYAN, RED, GREEN, RESET, DATABASE
-import tools_manager, explorer
+import sys
+from vuln_scanner import VulnEngine, ORANGE, RESET, CYAN, RED
 
-def get_system_storage():
-    _, _, free = shutil.disk_usage("/")
-    return f"{free / (1024**3):.2f} GB"
-
-def main():
+def main_menu():
+    engine = VulnEngine()
     while True:
-        os.system('clear')
-        print(f"{PURPLE}=====================================================${RESET}")
-        print(f"{YELLOW}         🍊 ORANGE PY-CORE ENGINE V5 🍊              {RESET}")
-        print(f"{WHITE} Storage Remaining on Device: {CYAN}{get_system_storage()}{RESET}")
-        print(f"{PURPLE}=====================================================${RESET}")
-        print(f" {YELLOW}1) 🌐 Live Internet Exploit Explorer & Scanner{RESET}")
+        print(f"\n{ORANGE}============================================={RESET}")
+        print(f"{ORANGE}        ORANGE_CITRUS v5 CONTROL MATRIX       {RESET}")
+        print(f"{ORANGE}============================================={RESET}")
+        print(f" {CYAN}[1]{RESET} View Live Vulnerability Tools Database")
+        print(f" {CYAN}[2]{RESET} Direct Internet Live Exploit Lookup")
+        print(f" {CYAN}[0]{RESET} Terminate Session")
+        print(f"{ORANGE}============================================={RESET}")
         
-        for key in DATABASE:
-            print(f" {GREEN}{int(key)+1}){RESET} {DATABASE[key]['title']} Menu")
-            
-        print(f" {RED}5) Exit Orange Interface{RESET}")
-        print(f"{PURPLE}=====================================================${RESET}")
-        
-        choice = input("Select category routing [1-5]: ").strip()
+        choice = input(f"{ORANGE}Execute Option #: {RESET}").strip()
         if choice == "1":
-            explorer.run_exploit_explorer()
-        elif str(int(choice)-1) in DATABASE:
-            tools_manager.run_category_menu(str(int(choice)-1))
-        elif choice == "5":
-            print(f"\n{YELLOW}Terminating Orange core stack. Happy hunting.{RESET}")
+            while True:
+                engine.display_categories()
+                cat_choice = input(f"\n{ORANGE}Select target module (0 to exit): {RESET}").strip()
+                if cat_choice == "0": break
+                try: engine.manage_tool(int(cat_choice))
+                except ValueError: pass
+        elif choice == "2":
+            keyword = input(f"\n{ORANGE}Enter keyword to scan online database: {RESET}").strip()
+            if keyword: engine.fetch_live_vulnerabilities(keyword)
+        elif choice == "0":
+            print(f"{RED}[*] Disconnecting engine terminals.{RESET}")
             sys.exit(0)
 
 if __name__ == "__main__":
-    main()
+    main_menu()
