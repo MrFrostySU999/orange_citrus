@@ -148,5 +148,10 @@
         "timestamp": "2026-06-25 06:36:09",
         "tool": "theHarvester [Expansion]",
         "error": "Command '['/data/data/com.termux/files/usr/bin/python', '-m', 'theHarvester.__main__', '-h']' returned non-zero exit status 1."
+    },
+    {
+        "timestamp": "2026-06-25 06:38:44",
+        "tool": "Sqlmap [Expansion]",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'sqlmap.py', '--hh']' returned non-zero exit status 2."
     }
 ]
