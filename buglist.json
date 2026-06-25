@@ -53,5 +53,10 @@
         "timestamp": "2026-06-25 05:55:05",
         "tool": "Nmap",
         "error": "Command '['/data/data/com.termux/files/usr/bin/python', '-m', 'nmap', '--help']' returned non-zero exit status 1."
+    },
+    {
+        "timestamp": "2026-06-25 05:55:21",
+        "tool": "Recon-ng",
+        "error": "Command '['bash', 'recon-ng', '--help']' returned non-zero exit status 2."
     }
 ]
