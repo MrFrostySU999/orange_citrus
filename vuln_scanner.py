@@ -111,15 +111,65 @@ class VulnEngine:
                 elif tool_data["type"] == "git":
                     tgt_dir = os.path.join(self.install_path, tool_data["dir"])
                     if is_inst:
-                        print(f"\n{YELLOW}[*] Removing repository deployment directory tree...{RESET}")
+                        print(f"
+{YELLOW}[*] Removing repository deployment directory tree...{RESET}")
                         shutil.rmtree(tgt_dir, ignore_errors=True)
                     else:
-                        print(f"\n{YELLOW}[*] Cloning external assets into location path from: {tool_data['path']}...{RESET}")
-                        try:
-                            subprocess.run(["git", "clone", tool_data["path"], tgt_dir], check=True)
-                            self.auto_install_python_dependencies(tgt_dir)
-                        except Exception as e:
-                            self.log_bug(tool_data['name'], e)
+                        fixed_path = tool_data["path"]
+                        
+                        # Maximize stability by looping through recovery attempts dynamically
+                        max_attempts = 2
+                        for attempt in range(1, max_attempts + 1):
+                            # TIER 1 CLEANER: Strip malformed protocols, redundant slashes, or missing hosts on the fly
+                            sanitized_path = fixed_path.replace("https://://", "https://").replace("http://://", "http://")
+                            sanitized_path = sanitized_path.replace(":///", "://")
+                            if "github.com" in sanitized_path and "://github.com" not in sanitized_path:
+                                sanitized_path = sanitized_path.replace("github.com", "://github.com")
+                            
+                            print(f"
+{CYAN}[*] [Attempt {attempt}/{max_attempts}] Pulling assets from: {sanitized_path}...{RESET}")
+                            try:
+                                result = subprocess.run(["git", "clone", sanitized_path, tgt_dir], capture_output=True, text=True)
+                                
+                                # Check if git exited cleanly with a 0 return code
+                                if result.returncode == 0:
+                                    print(f"{GREEN}[+] Operation successful!{RESET}")
+                                    self.auto_install_python_dependencies(tgt_dir)
+                                    break
+                                else:
+                                    # EXCEPTION PARSER ENGINE: Inspect stdout and stderr for specific known crashes
+                                    error_log = result.stderr + result.stdout
+                                    print(f"{RED}[!] Git Operation Alert: Execution terminated with exit flag {result.returncode}{RESET}")
+                                    
+                                    # Error Case A: Protocol mismatch or URL rejected typo error handles
+                                    if "URL rejected" in error_log or "Could not resolve host" in error_log:
+                                        print(f"{YELLOW}[!] Auto-Catch: Malformed URL format trace caught. Forcing alternative HTTPS layout protocol...{RESET}")
+                                        # Force a fallback reconstruction conversion if strings were corrupted
+                                        tool_name_extract = tool_data["name"]
+                                        if hasattr(self, 'vendor_maps') and tool_name_extract.lower() in self.vendor_maps:
+                                            fixed_path = f"https://://github.com{self.vendor_maps[tool_name_extract.lower()]}.git"
+                                        else:
+                                            fixed_path = f"https://://github.comorange-citrus-framework/{tool_name_extract}.git"
+                                    
+                                    # Error Case B: Clobbered local files or lock blocks causing conflicts
+                                    elif "already exists and is not an empty directory" in error_log:
+                                        print(f"{YELLOW}[!] Auto-Catch: Corrupted storage lock or conflict traced. Purging directory and resetting slot...{RESET}")
+                                        shutil.rmtree(tgt_dir, ignore_errors=True)
+                                        
+                                    # Fallback recovery mode for any unspecified general terminal errors
+                                    else:
+                                        print(f"{YELLOW}[!] Auto-Catch: General network/file exception caught. Running directory wipe fallback...{RESET}")
+                                        shutil.rmtree(tgt_dir, ignore_errors=True)
+                                        
+                            except Exception as e:
+                                print(f"{RED}[-] Subprocess execution exception error: {e}{RESET}")
+                                shutil.rmtree(tgt_dir, ignore_errors=True)
+                                self.log_bug(tool_data['name'], f"Attempt {attempt} Exception: {str(e)}")
+                                
+                        else:
+                            print(f"
+{RED}[!] Pipeline Core Error: Self-healing engine failed to recover asset after {max_attempts} attempts.{RESET}")
+                            self.log_bug(tool_data['name'], "Self-healing pipeline exhausted without a clean recovery exit.")
                 input(f"\n{GREEN}[+] Operations complete. Press Enter...{RESET}")
             elif choice == "2": break
 
@@ -164,10 +214,7 @@ class VulnEngine:
             {"name": "Sherlock", "size": "1.2 MB", "description": "Hunt down social media accounts by username across 300+ platforms."},
             {"name": "Spiderfoot", "size": "14.5 MB", "description": "Automated OSINT reconnaissance platform aggregating 200+ sources."},
             {"name": "PhoneInfoga", "size": "12.3 MB", "description": "Advanced phone number information gathering and scanning framework."},
-            {"name": "Dirsearch", "size": "11.4 MB", "description": "Advanced command-line tool designed to brute force directories."}
-        ]
-
-        items.extend([
+            {"name": "Dirsearch", "size": "11.4 MB", "description": "Advanced command-line tool designed to brute force directories."},
             {"name": "Gobuster", "size": "4.8 MB", "description": "Directory/file, DNS, and VHOST busting tool coded in Go."},
             {"name": "WhatWeb", "size": "3.9 MB", "description": "Identifies web technologies, CMS platforms, and embedded items."},
             {"name": "Nikto", "size": "4.5 MB", "description": "Web server assessment tool for dangerous files and outdated software."},
@@ -189,10 +236,7 @@ class VulnEngine:
             {"name": "Datasploit", "size": "9.4 MB", "description": "Automated open source intelligence collector for corporate targets."},
             {"name": "CloudFail", "size": "2.1 MB", "description": "Misconfiguration tracking tool that bypasses Cloudflare firewalls."},
             {"name": "FinalRecon", "size": "3.3 MB", "description": "All-in-one web reconnaissance engine gathering headers and SSL logs."},
-            {"name": "GHunt", "size": "5.6 MB", "description": "Investigates Google accounts, emails, and documents using OSINT maps."}
-        ])
-
-        items.extend([
+            {"name": "GHunt", "size": "5.6 MB", "description": "Investigates Google accounts, emails, and documents using OSINT maps."},
             {"name": "Dnsrecon", "size": "3.1 MB", "description": "Advanced script for zone transfers, reverse lookups, and cache snooping."},
             {"name": "Knockpy", "size": "1.4 MB", "description": "Scans subdomains using wildcard testing and wordlist authority arrays."},
             {"name": "TruffleHog", "size": "33.2 MB", "description": "Searches git source code history patterns for private cryptographic keys."},
@@ -224,7 +268,7 @@ class VulnEngine:
             {"name": "Wifite2", "size": "2.4 MB", "description": "Automated wireless attack tool auditing localized airwaves."},
             {"name": "Fluxion", "size": "15.4 MB", "description": "Social engineering based wireless security auditing tracking layer."},
             {"name": "Airgeddon", "size": "8.9 MB", "description": "Multi-use bash script for wireless auditing network scopes."}
-        ])
+        ]
 
         for i in range(len(items) + 1, 101):
             items.append({
@@ -263,6 +307,43 @@ class VulnEngine:
         print(f"\n{CYAN}[*] Handing download instance context pipeline to run_tool_management...{RESET}")
         self.run_tool_management(target_tool)
 
+    def launch_tool_interface(self):
+        print(f"\n{CYAN}=== INSTALLED TOOLS RUNTIME SHELL INSTANTIATOR ==={RESET}")
+        installed_git_dirs = []
+        if os.path.exists(self.install_path):
+            installed_git_dirs = [d for d in os.listdir(self.install_path) if os.path.isdir(os.path.join(self.install_path, d))]
+            
+        available_targets = []
+        if shutil.which("nmap") or os.path.exists("/usr/bin/nmap"): available_targets.append({"name": "Nmap Scanner", "type": "apt", "bin": "nmap"})
+        if shutil.which("nikto") or os.path.exists("/usr/bin/nikto"): available_targets.append({"name": "Nikto Web", "type": "apt", "bin": "nikto"})
+        
+        for folder in sorted(installed_git_dirs):
+            available_targets.append({"name": folder, "type": "git", "dir": folder})
+            
+        if not available_targets:
+            print(f"{YELLOW}[!] Complete absence of usable run targets detected. Go deploy Option 2!{RESET}")
+            input("\nPress [Enter] to return...")
+            return
+            
+        for i, t in enumerate(available_targets, 1):
+            print(f" [{i}] Launch environment runtime profile -> {t['name']} ({t['type'].upper()})")
+            
+        l_choice = input(f"\nSelect environment instance key (0 to abort): ").strip()
+        if l_choice == "0" or not l_choice: return
+        try:
+            l_idx = int(l_choice) - 1
+            if 0 <= l_idx < len(available_targets):
+                target = available_targets[l_idx]
+                if target["type"] == "git":
+                    env_path = os.path.join(self.install_path, target["dir"])
+                else:
+                    env_path = "/usr/bin"
+                    
+                print(f"{GREEN}[*] Spawning shell environment context path instance at {env_path}...{RESET}")
+                print(f"{YELLOW}[*] Type 'exit' to drop back into Orange Citrus Control Matrix.{RESET}\n")
+                subprocess.run(["bash" if sys.platform != "win32" else "cmd.exe"], cwd=env_path)
+        except ValueError: pass
+
     def fetch_live_vulnerabilities(self, keyword):
         print(f"\n{CYAN}[*] Querying remote VulnDB instances for trace: '{keyword}'...{RESET}")
         url = f"https://circl.lu{keyword}"
@@ -280,7 +361,7 @@ class VulnEngine:
         except Exception as e:
             print(f"{RED}[-] Pipeline communication error occurred.{RESET}")
             self.log_bug("Remote Exploitation API Engine", e)
-        input(f"\nPress [Enter] to return...")
+        input("\nPress [Enter] to return...")
 
     def execute_scan_comparison(self):
         print(f"\n{CYAN}=== CROSS-TOOL SCANNER COMPARISON MATRIX ==={RESET}")
@@ -290,31 +371,7 @@ class VulnEngine:
         print(f"|-----------------|-------------------|----------------------|-----------------|")
         print(f"| Nmap Scanner    | 12.4s             | Low Noise            | 98.4% Confidence|")
         print(f"| Nikto Web       | 145.2s            | High Noise           | 89.1% Confidence|")
-        input(f"\nPress [Enter] to return...")
-
-    def launch_tool_interface(self):
-        print(f"\n{CYAN}=== INSTALLED TOOLS RUNTIME SHELL INSTANTIATOR ==={RESET}")
-        installed = []
-        for cat_id, cat in DATABASE.items():
-            for t_id, t_data in cat["tools"].items():
-                if self.check_installed(t_data):
-                    installed.append(t_data)
-        if not installed:
-            print(f"{YELLOW}[!] Complete absence of usable run targets detected.{RESET}")
-            input("\nPress [Enter] to return...")
-            return
-        for i, t in enumerate(installed, 1):
-            print(f" [{i}] Launch environment runtime profile -> {t['name']}")
-        l_choice = input(f"\nSelect environment instance key (0 to abort): ").strip()
-        if l_choice == "0" or not l_choice: return
-        try:
-            l_idx = int(l_choice) - 1
-            if 0 <= l_idx < len(installed):
-                tool = installed[l_idx]
-                env_path = os.path.join(self.install_path, tool.get("dir", "")) if tool["type"] == "git" else "/usr/bin"
-                print(f"{GREEN}[*] Initializing target interactive terminal paths at {env_path}...{RESET}\n")
-                subprocess.run(["bash" if sys.platform != "win32" else "cmd.exe"], cwd=env_path)
-        except ValueError: pass
+        input("\nPress [Enter] to return...")
 
     def log_bug(self, tool_name, error_msg):
         bugs = []
@@ -336,4 +393,4 @@ class VulnEngine:
                 print(f" [{index}] Time: {bug['timestamp']} | Target Exception: {bug['tool']}")
                 print(f"     Details: {bug['error']}")
         except Exception as e: print(f"[-] Data access tracking layer violation: {e}")
-        input(f"\nPress [Enter] to resume...")
+        input("\nPress [Enter] to resume...")
