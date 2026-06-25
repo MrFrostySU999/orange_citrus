@@ -203,7 +203,7 @@ class VulnEngine:
                     if os.path.exists(req_path):
                         subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], cwd=target['dir'])
                     
-                    if target["tag"] == "theharvester": run_cmd = [sys.executable, "theHarvester.py", "-h"]
+                    if target["tag"] == "theharvester": run_cmd = [sys.executable, "theHarvester.py", "-d", "example.com", "-b", "anubis"]
                     elif target["tag"] == "sherlock": run_cmd = [sys.executable, "-m", "sherlock_project", "--help"]
                     elif target["tag"] == "sqlmap": run_cmd = [sys.executable, "sqlmap.py", "--hh"]
                     elif target["tag"] == "dirsearch": run_cmd = [sys.executable, "dirsearch.py", "--help"]
