@@ -20,7 +20,7 @@ DATABASE = {
             "1": {
                 "type": "git", 
                 "name": "Recon-ng", 
-                "path": "git@github.com:lanmaster53/recon-ng.git", 
+                "path": "https://github.comlanmaster53/recon-ng.git", 
                 "dir": "recon-ng", 
                 "pkg": "recon-ng", 
                 "size": "4.2 MB", 
@@ -30,7 +30,7 @@ DATABASE = {
             "2": {
                 "type": "git", 
                 "name": "theHarvester", 
-                "path": "git@github.com:laramies/theHarvester.git", 
+                "path": "https://github.comlaramies/theHarvester.git", 
                 "dir": "theHarvester", 
                 "pkg": "theharvester", 
                 "size": "2.1 MB", 
@@ -54,7 +54,7 @@ DATABASE = {
             "1": {
                 "type": "git", 
                 "name": "Sqlmap", 
-                "path": "git@github.com:sqlmapproject/sqlmap.git", 
+                "path": "https://github.comsqlmapproject/sqlmap.git", 
                 "dir": "sqlmap", 
                 "pkg": "sqlmap", 
                 "size": "28.5 MB", 
