@@ -5,6 +5,7 @@ import requests
 import json
 import shutil
 import subprocess
+import importlib.util
 
 ORANGE = '\033[38;5;208m'
 RED = '\033[91m'
@@ -50,8 +51,8 @@ class VulnEngine:
             "error": str(error_msg)
         })
         with open(self.bug_file, 'w') as f: json.dump(bugs, f, indent=4)
-        print(f"{RED}[!] Error logged to buglist.json!{RESET}")
-        self.sync_to_github(f"Logged runtime exception error for {tool_name}")
+        print(f"{RED}[!] Error tracked! Details dumped into buglist.json for analysis.{RESET}")
+        self.sync_to_github(f"Logged error for {tool_name}")
 
     def view_buglist(self):
         if not os.path.exists(self.bug_file):
@@ -91,6 +92,42 @@ class VulnEngine:
             return f"{free / (1024 ** 3):.2f} GB"
         except Exception: return "UNKNOWN"
 
+    def deep_verify_requirements(self, tool_name, app_dir):
+        """Scans requirements.txt line-by-line dynamically before execution to catch missing modules."""
+        req_path = os.path.join(app_dir, "requirements.txt")
+        if not os.path.exists(req_path):
+            return True
+
+        missing = []
+        try:
+            with open(req_path, "r") as f:
+                lines = f.readlines()
+            
+            for line in lines:
+                raw_dep = line.strip().split("==")[0].split(">=")[0].split("<=")[0].strip()
+                if raw_dep and not raw_dep.startswith("#"):
+                    # Map common naming deviations to clean up import checks
+                    check_name = "bs4" if raw_dep.lower() == "beautifulsoup4" else raw_dep
+                    if importlib.util.find_spec(check_name) is None:
+                        missing.append(raw_dep)
+        except Exception:
+            pass
+
+        if missing:
+            print(f"\n{YELLOW}[!] Dynamic Guard Alert: '{tool_name}' requires {len(missing)} missing packages:{RESET}")
+            for m in missing: print(f"    --> Missing: {m}")
+            print(f"{CYAN}------------------------------------------------------{RESET}")
+            opt = input(f"{ORANGE}Would you like to install the missing libraries now? (y/n): {RESET}").lower().strip()
+            if opt == 'y':
+                print(f"[*] Compiling packages globally into system paths...")
+                for m in missing:
+                    print(f"[*] Downloading package node via pip: '{m}'...")
+                    subprocess.run([sys.executable, "-m", "pip", "install", m], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"{GREEN}[+] Pre-flight requirements resolved successfully!{RESET}\n")
+            else:
+                print(f"{RED}[!] Proceeding without matching packages. Launcher fallback active.{RESET}\n")
+        return True
+
     def execute_scan_comparison(self):
         print(f"\n{ORANGE}============================================={RESET}")
         print(f"      CROSS-TOOL AUDIT & COMPARISON MATRIX   ")
@@ -107,21 +144,6 @@ class VulnEngine:
         input(f"\nPress [Enter] to sync logs and return...")
         self.sync_to_github(f"Executed comparison scan for {target}")
 
-    def auto_heal_dependencies(self, app_dir):
-        """Pre-scans requirements files and strips bad parameters to avoid compiler traps."""
-        req_path = os.path.join(app_dir, "requirements.txt")
-        if not os.path.exists(req_path): return
-        print(f"\n{YELLOW}[*] Running local package dependency scan validation...{RESET}")
-        try:
-            with open(req_path, "r") as f: lines = f.readlines()
-            for line in lines:
-                lib = line.strip().split("==")[0].split(">=")[0].split("<=")[0].strip()
-                # Skip heavy C-compilation targets that cause exit status crashes in Termux
-                if lib and not lib.startswith("#") and lib.lower() not in ["uvloop", "aiodns", "pandas", "numpy"]:
-                    subprocess.run([sys.executable, "-m", "pip", "install", lib], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"{GREEN}[+] Requirements scanner verified baseline nodes safely.{RESET}")
-        except Exception as e: print(f"{RED}[-] Scanner exception: {e}{RESET}")
-
     def scan_and_list_online_tools(self):
         feed = self.get_online_tool_feed()
         while True:
@@ -131,8 +153,8 @@ class VulnEngine:
             for key, tool in feed.items():
                 dest_dir = os.path.join(self.install_path, tool["dir"])
                 status = f"{GREEN}[Installed]{RESET}" if os.path.exists(dest_dir) else f"{RED}[Not Installed]{RESET}"
-                print(f" [{key}] {tool['name'].ljust(15)} Size: {tool['size'].ljust(8)} Status: {status}")
-            choice = input(f"{ORANGE}Select utility index (0 to back): {RESET}").strip()
+                print(f" [{key}] {tool['name'].ljust(15)} Status: {status}")
+            choice = input(f"{ORANGE}Select index (0 to back): {RESET}").strip()
             if choice == "0" or choice == "": break
             try:
                 sel = int(choice)
@@ -151,8 +173,8 @@ class VulnEngine:
                 self.sync_to_github(f"Installed {tool['name']}")
                 break
             elif sub_choice == "2":
-                if os.path.exists(dest_dir): os.system(f"rm -rf {dest_dir}")
-                self.sync_to_github(f"Removed {tool['name']}")
+                os.system(f"rm -rf {dest_dir}")
+                self.sync_to_github(f"Deleted {tool['name']}")
                 break
             elif sub_choice == "0": break
 
@@ -181,7 +203,8 @@ class VulnEngine:
                 if 0 <= idx < len(installed_apps):
                     target = installed_apps[idx]
                     
-                    self.auto_heal_dependencies(target['dir'])
+                    # TRIGGER DYNAMIC REQUIREMENT SCAN BEFORE ANY LAUNCH ATTEMPT
+                    self.deep_verify_requirements(target["name"], target["dir"])
                     
                     if target["tag"] == "theharvester": run_cmd = [sys.executable, "-m", "theHarvester.__main__", "-h"]
                     elif target["tag"] == "sherlock": run_cmd = [sys.executable, "-m", "sherlock_project", "--help"]
@@ -196,20 +219,18 @@ class VulnEngine:
                     else: run_cmd = ["bash"]
 
                     try:
-                        print(f"{ORANGE}[Running Context Pipeline]: {' '.join(run_cmd)}{RESET}\n")
+                        print(f"{ORANGE}[Running]: {' '.join(run_cmd)}{RESET}\n")
                         subprocess.run(run_cmd, cwd=target['dir'], check=True)
                         input(f"\n{GREEN}Execution finished. Press [Enter] to resume...{RESET}")
                     except Exception as failure:
                         self.log_bug(target["name"], failure)
-                        # SANDBOXED FALLBACK RECOVERY LAYER (Prevents fallback loop print floods)
-                        print(f"{RED}[!] Intercepted Core Execution Exception. Diverting target shell to Sandbox environment...{RESET}")
+                        print(f"{RED}[!] Intercepted Exception. Diverting target shell to Sandbox...{RESET}")
                         time.sleep(1)
                         print(f"\n{YELLOW}=== ISOLATED SANDBOX ENVIRONMENT OVERRIDE ==={RESET}")
                         print(f"  Tool Name: {target['name']}")
-                        print(f"  Error Logged: {str(failure)[:80]}...")
-                        print(f"  {CYAN}Recommendation: Run 'python3 -m pip install tomli requests' globally.{RESET}")
+                        print(f"  Error Logged: {str(failure)[:100]}")
                         print(f"{YELLOW}============================================={RESET}")
-                        input(f"\nPress [Enter] to cleanly close sandbox context and resume main terminal loop...")
+                        input(f"\nPress [Enter] to return...")
                 else: print(f"{RED}[-] Out of range.{RESET}")
             except ValueError: pass
 
