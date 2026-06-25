@@ -1,33 +1,74 @@
-RED = '\033[1;31m'
-GREEN = '\033[1;32m'
-YELLOW = '\033[1;33m'
-BLUE = '\033[1;34m'
-PURPLE = '\033[1;35m'
-CYAN = '\033[1;36m'
-WHITE = '\033[1;37m'
+# =====================================================
+# ORANGE_CITRUS CONFIGURATION MODULE
+# Contains ANSI color constants and master tool mapping.
+# =====================================================
+
+ORANGE = '\033[38;5;208m'
+RED = '\033[91m'
+GREEN = '\033[92m'
+CYAN = '\033[96m'
+YELLOW = '\033[93m'
+BLUE = '\033[94m'
+WHITE = '\033[97m'
 RESET = '\033[0m'
 
 DATABASE = {
-    "1": {
-        "title": "Information Gathering",
-        "color": BLUE,
-        "tools": {
-            "1": {"name": "Nmap Scanner", "pkg": "nmap", "size": "5.5 MB", "desc": "Network map scanning and port auditing.", "syntax": "nmap -sT -v target-ip"},
-            "2": {"name": "DMitry Recon", "pkg": "dmitry", "size": "150 KB", "desc": "Information Gathering software for subdomains.", "syntax": "dmitry -wnpb target.com"}
-        }
-    },
-    "2": {
-        "title": "Vulnerability Analysis",
+    1: {
+        "title": "Information Gathering & OSINT",
         "color": CYAN,
         "tools": {
-            "1": {"name": "Sqlmap Engine", "pkg": "sqlmap", "size": "7.8 MB", "desc": "Automated SQL injection mapping framework.", "syntax": "sqlmap -u 'url?id=1' --dbs"}
+            "1": {
+                "type": "git", 
+                "name": "Recon-ng", 
+                "path": "git@github.com:lanmaster53/recon-ng.git", 
+                "dir": "recon-ng", 
+                "pkg": "recon-ng", 
+                "size": "4.2 MB", 
+                "desc": "Powerful web-based open source intelligence framework.", 
+                "syntax": "recon-ng"
+            },
+            "2": {
+                "type": "git", 
+                "name": "theHarvester", 
+                "path": "git@github.com:laramies/theHarvester.git", 
+                "dir": "theHarvester", 
+                "pkg": "theharvester", 
+                "size": "2.1 MB", 
+                "desc": "Gathers emails, subdomains, hosts, employee names, and open ports.", 
+                "syntax": "theHarvester -d target.com -l 500 -b google"
+            },
+            "3": {
+                "type": "apt", 
+                "name": "Nmap Scanner", 
+                "pkg": "nmap", 
+                "size": "26.4 MB", 
+                "desc": "Network exploration tool and security / port scanner.", 
+                "syntax": "nmap -sV -sC -T4 target.com"
+            }
         }
     },
-    "3": {
-        "title": "Password Exploits",
-        "color": GREEN,
+    2: {
+        "title": "Web Vulnerability Scanning",
+        "color": ORANGE,
         "tools": {
-            "1": {"name": "Hydra Cracker", "pkg": "hydra", "size": "1.1 MB", "desc": "Parallelized login credential brute-forcer.", "syntax": "hydra -l user -P passes.txt ssh://target"}
+            "1": {
+                "type": "git", 
+                "name": "Sqlmap", 
+                "path": "git@github.com:sqlmapproject/sqlmap.git", 
+                "dir": "sqlmap", 
+                "pkg": "sqlmap", 
+                "size": "28.5 MB", 
+                "desc": "Automatic SQL injection and database takeover tool.", 
+                "syntax": "sqlmap -u 'http://target.com' --dbs"
+            },
+            "2": {
+                "type": "apt", 
+                "name": "Nikto Web", 
+                "pkg": "nikto", 
+                "size": "4.5 MB", 
+                "desc": "Web server assessment tool for dangerous files and outdated software.", 
+                "syntax": "nikto -h target.com"
+            }
         }
     }
 }
