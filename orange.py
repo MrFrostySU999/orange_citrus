@@ -1,30 +1,42 @@
+# =====================================================
+# ORANGE_CITRUS CONTROL TERMINAL INTERFACE
+# Master orchestrator execution control loop file.
+# =====================================================
+
 import sys
-from vuln_scanner import VulnEngine, ORANGE, RESET, CYAN, RED, GREEN
+import os
+from vuln_scanner import VulnEngine
+from config import ORANGE, RESET, RED
 
 def main_menu():
     engine = VulnEngine()
-    version_tag = "v5.5.0-Stable"
+    version_tag = "v5.6.0-Enterprise"
     
     while True:
         print(f"\n{ORANGE}============================================={RESET}")
         print(f"{ORANGE}    ORANGE_CITRUS CONTROL MATRIX ({version_tag})   {RESET}")
         print(f"{ORANGE}============================================={RESET}")
-        print(f" Core Vulnerability Categories Manager")
-        print(f" Scan & Download Expansion Pentest Tools")
-        print(f" Direct Internet Live Exploit Lookup")
-        print(f" CROSS-TOOL SCANNER COMPARISON MATRIX")
-        print(f" LAUNCH INSTALLED TOOLS TERMINAL")
-        print(f" VIEW INTERCEPTED ERROR LOGS (BUGLIST)")
-        print(f" Terminate Session")
+        print(f" Current Global Attack Target: {RED}{engine.global_target}{RESET}")
+        print(f"---------------------------------------------")
+        print(f" [1] Core Vulnerability Categories Manager")
+        print(f" [2] Scan & Download Expansion Pentest Tools")
+        print(f" [3] Direct Internet Live Exploit Lookup")
+        print(f" [4] CROSS-TOOL SCANNER COMPARISON MATRIX")
+        print(f" [5] LAUNCH INSTALLED TOOLS TERMINAL")
+        print(f" [6] VIEW INTERCEPTED ERROR LOGS (BUGLIST)")
+        print(f" [7] DEFINE GLOBAL ATTACK OBJECTIVE TARGET")
+        print(f" [0] Terminate Session")
         print(f"{ORANGE}============================================={RESET}")
         
         choice = input(f"{ORANGE}Execute Option #: {RESET}").strip()
         if choice == "1":
             while True:
-                engine.display_categories()
-                cat_choice = input(f"\n{ORANGE}Select target module (0 to exit): {RESET}").strip()
+                print(f"\n{ORANGE}--- CORE VULNERABILITY SUITES ---{RESET}")
+                print(" [1] Information Gathering & OSINT")
+                print(" [2] Web Vulnerability Scanning")
+                cat_choice = input(f"\nSelect target module (0 to exit): ").strip()
                 if cat_choice == "0": break
-                try: engine.manage_tool(int(cat_choice))
+                try: engine.run_category_menu(int(cat_choice))
                 except ValueError: pass
         elif choice == "2": engine.scan_and_list_online_tools()
         elif choice == "3":
@@ -33,6 +45,7 @@ def main_menu():
         elif choice == "4": engine.execute_scan_comparison()
         elif choice == "5": engine.launch_tool_interface()
         elif choice == "6": engine.view_buglist()
+        elif choice == "7": engine.set_global_target()
         elif choice == "0": 
             print(f"{RED}[*] Disconnecting engine terminals.{RESET}"); sys.exit(0)
 
