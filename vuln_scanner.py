@@ -183,7 +183,7 @@ class VulnEngine:
                     
                     self.auto_heal_dependencies(target['dir'])
                     
-                    if target["tag"] == "theharvester": run_cmd = [sys.executable, "theHarvester.py", "--help"]
+                    if target["tag"] == "theharvester": run_cmd = [sys.executable, "-m", "theHarvester.__main__", "-h"]
                     elif target["tag"] == "sherlock": run_cmd = [sys.executable, "-m", "sherlock_project", "--help"]
                     elif target["tag"] == "sqlmap": run_cmd = [sys.executable, "sqlmap.py", "--hh"]
                     elif target["tag"] == "dirsearch": run_cmd = [sys.executable, "dirsearch.py", "--help"]
