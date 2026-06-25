@@ -163,5 +163,10 @@
         "timestamp": "2026-06-25 06:39:33",
         "tool": "Nikto",
         "error": "Command '['perl', 'nikto.pl', '-Help']' returned non-zero exit status 2."
+    },
+    {
+        "timestamp": "2026-06-25 07:20:52",
+        "tool": "theHarvester [Expansion]",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python3', '-m', 'theHarvester.__main__', '-h']' returned non-zero exit status 1."
     }
 ]
