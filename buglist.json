@@ -98,5 +98,10 @@
         "timestamp": "2026-06-25 06:21:24",
         "tool": "theHarvester [Expansion]",
         "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'theHarvester.py', '--help']' returned non-zero exit status 2."
+    },
+    {
+        "timestamp": "2026-06-25 06:22:02",
+        "tool": "theHarvester [Expansion]",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'theHarvester.py', '--help']' returned non-zero exit status 2."
     }
 ]
