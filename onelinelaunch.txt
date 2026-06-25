@@ -1,0 +1,1 @@
+mkdir -p ~/orange_v1 && cd ~/orange_v1 && curl -sLO https://githubusercontent.com/MrFrostySU999/orange_citrus/main/ && curl -sLO https://githubusercontent.com/MrFrostySU999/orange_citrus/main/ && chmod +x orange.py && python3 orange.py
