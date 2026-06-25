@@ -1,0 +1,27 @@
+[
+    {
+        "timestamp": "2026-06-25 05:07:53",
+        "tool": "Sherlock",
+        "error": "Command '['python3', '-m', 'sherlock', '--help']' returned non-zero exit status 1."
+    },
+    {
+        "timestamp": "2026-06-25 05:09:21",
+        "tool": "Sherlock",
+        "error": "cannot access local variable 'subprocess' where it is not associated with a value"
+    },
+    {
+        "timestamp": "2026-06-25 05:10:49",
+        "tool": "Sherlock",
+        "error": "Command '['python3', '-m', 'sherlock', '--help']' returned non-zero exit status 1."
+    },
+    {
+        "timestamp": "2026-06-25 05:12:33",
+        "tool": "Sherlock",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'sherlock/sherlock.py', '--help']' returned non-zero exit status 2."
+    },
+    {
+        "timestamp": "2026-06-25 05:14:04",
+        "tool": "Sherlock",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'sherlock/sherlock.py', '--help']' returned non-zero exit status 2."
+    }
+]
