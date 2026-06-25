@@ -29,6 +29,26 @@ class VulnEngine:
             5: "Port Scanning & Network Discovery"
         }
 
+    def sync_to_github(self, action_message):
+        """Automatically stages, commits, and pushes changes to GitHub asynchronously."""
+        print(f"\n{CYAN}[*] Auto-Sync triggered: {action_message}...{RESET}")
+        try:
+            # Stage everything in your project folder
+            subprocess.run(["git", "add", "."], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Commit with an automated action message
+            commit_msg = f"Auto-Update: {action_message} (via Orange-Citrus Engine)"
+            subprocess.run(["git", "commit", "-m", commit_msg], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Push cleanly using your verified SSH keys
+            print(f"{GREEN}[*] Synchronising local workspace with GitHub profile repository...{RESET}")
+            subprocess.run(["git", "push", "origin", "main", "--force"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print(f"{GREEN}[+] Remote sync successful! Repository is up to date.{RESET}")
+        except subprocess.CalledProcessError:
+            print(f"{YELLOW}[!] Auto-Sync skipped: No new code changes or remote connection occupied.{RESET}")
+        except Exception as e:
+            print(f"{RED}[-] Auto-Sync failed: {e}{RESET}")
+
     def log_bug(self, tool_name, error_msg):
         bugs = []
         if os.path.exists(self.bug_file):
@@ -42,10 +62,11 @@ class VulnEngine:
         })
         with open(self.bug_file, 'w') as f: json.dump(bugs, f, indent=4)
         print(f"{RED}[!] Error logged! Details dumped into buglist.json for analysis.{RESET}")
+        self.sync_to_github(f"Logged runtime exception error for {tool_name}")
 
     def view_buglist(self):
         if not os.path.exists(self.bug_file):
-            print(f"{GREEN}[+] Zero errors detected. buglist.json is clean!{RESET}"); return
+            print(f"\n{GREEN}[+] Zero errors detected. buglist.json is clean!{RESET}"); return
         try:
             with open(self.bug_file, 'r') as f: bugs = json.load(f)
             print(f"\n{RED}=== CRITICAL BUG WATCHLIST ({len(bugs)} logs) ==={RESET}")
@@ -72,7 +93,7 @@ class VulnEngine:
             2: {"name": "Sqlmap", "path": "sqlmapproject/sqlmap.git", "dir": "sqlmap", "size": "28.5 MB", "cat_id": 2, "func": "Automates SQL injection auditing.", "exec": "sqlmap.py"},
             3: {"name": "Amass", "path": "owasp-amass/amass.git", "dir": "amass", "size": "44.2 MB", "cat_id": 3, "func": "In-depth asset discovery mapping.", "exec": "amass"},
             4: {"name": "Dirsearch", "path": "maurosoria/dirsearch.git", "dir": "dirsearch", "size": "11.4 MB", "cat_id": 2, "func": "Brute forces web server directories.", "exec": "dirsearch.py"},
-            5: {"name": "Sherlock", "path": "sherlock-project/sherlock.git", "dir": "sherlock", "size": "0.9 MB", "cat_id": 1, "func": "Hunts profiles by username.", "exec": "sherlock.py"}
+            5: {"name": "Sherlock", "path": "sherlock-project/sherlock.git", "dir": "sherlock", "size": "0.9 MB", "cat_id": 1, "func": "Hunts profiles by username.", "exec": "sherlock_project"}
         }
 
     def get_free_space(self):
@@ -117,9 +138,12 @@ class VulnEngine:
             if sub_choice == "1":
                 if os.path.exists(dest_dir): os.system(f"git -C {dest_dir} pull")
                 else: os.system(f"git clone git@github.com:{tool['path']} {dest_dir}")
+                self.sync_to_github(f"Deployed expansion tool utility: {tool['name']}")
                 break
             elif sub_choice == "2":
-                if os.path.exists(dest_dir): os.system(f"rm -rf {dest_dir}")
+                if os.path.exists(dest_dir): 
+                    os.system(f"rm -rf {dest_dir}")
+                    self.sync_to_github(f"Purged expansion tool utility: {tool['name']}")
                 break
             elif sub_choice == "0": break
 
@@ -147,20 +171,28 @@ class VulnEngine:
                 idx = int(choice) - 1
                 if 0 <= idx < len(installed_apps):
                     target = installed_apps[idx]
+                    print(f"\n{GREEN}[*] Initializing execution pipeline for {target['name']}...{RESET}")
+                    
                     req_path = os.path.join(target['dir'], "requirements.txt")
                     if os.path.exists(req_path):
                         subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], cwd=target['dir'])
+                    
                     found_path = None
                     for root, dirs, files in os.walk(target["dir"]):
                         if target["exec"] in files:
                             found_path = os.path.relpath(os.path.join(root, target["exec"]), target["dir"]); break
                         elif "__main__.py" in files and target["exec"].replace(".py", "") in root.lower():
                             found_path = os.path.relpath(os.path.join(root, "__main__.py"), target["dir"]); break
-                    if found_path:
+                    
+                    if target["exec"] == "sherlock_project":
+                        run_cmd = [sys.executable, "-m", "sherlock_project", "--help"]
+                    elif found_path:
                         if found_path.endswith(".py"): run_cmd = [sys.executable, found_path, "--help"]
                         elif found_path.endswith(".pl"): run_cmd = ["perl", found_path, "-Help"]
                         else: run_cmd = ["bash", found_path, "--help"]
-                    else: run_cmd = [sys.executable, "-m", target["exec"].replace(".py", ""), "--help"]
+                    else: 
+                        run_cmd = [sys.executable, "-m", target["exec"].replace(".py", ""), "--help"]
+                        
                     try:
                         print(f"{ORANGE}[Running]: {' '.join(run_cmd)}{RESET}\n")
                         subprocess.run(run_cmd, cwd=target['dir'], check=True)
@@ -207,7 +239,7 @@ class VulnEngine:
     def display_categories(self):
         print(f"\n{ORANGE}============================================={RESET}")
         print(f"    ORANGEV5 STYLE: LIVE VULNERABILITY INDEX   ")
-        print(f"============================================={RESET}")
+        print(f"{ORANGE}============================================={RESET}")
         for i in range(1, 6):
             tool = self.get_tool_meta(i)
             status = f"{GREEN}[Installed]{RESET}" if os.path.exists(os.path.join(self.install_path, tool["dir"])) else f"{RED}[Not Installed]{RESET}"
@@ -231,9 +263,12 @@ class VulnEngine:
             if sub_choice == "1":
                 if os.path.exists(target_dir): os.system(f"git -C {target_dir} pull")
                 else: os.system(f"git clone git@github.com:{tool['path']} {target_dir}")
+                self.sync_to_github(f"Compiled core tool suite utility: {tool['name']}")
                 break
             elif sub_choice == "2":
-                os.system(f"rm -rf {target_dir}")
+                if os.path.exists(target_dir):
+                    os.system(f"rm -rf {target_dir}")
+                    self.sync_to_github(f"Purged core tool suite utility: {tool['name']}")
                 break
             elif sub_choice == "3":
                 keyword = input(f"\n{ORANGE}Enter keyword to query: {RESET}").strip()

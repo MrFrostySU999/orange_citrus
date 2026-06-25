@@ -3,15 +3,18 @@ from vuln_scanner import VulnEngine, ORANGE, RESET, CYAN, RED, GREEN
 
 def main_menu():
     engine = VulnEngine()
+    # Hardcoded global version label metadata
+    version_tag = "v5.2.0-Stable"
+    
     while True:
         print(f"\n{ORANGE}============================================={RESET}")
-        print(f"{ORANGE}        ORANGE_CITRUS v5 CONTROL MATRIX       {RESET}")
+        print(f"{ORANGE}    ORANGE_CITRUS CONTROL MATRIX ({version_tag})   {RESET}")
         print(f"{ORANGE}============================================={RESET}")
         print(f" [1] Core Vulnerability Categories Manager")
         print(f" [2] Scan & Download Expansion Pentest Tools")
         print(f" [3] Direct Internet Live Exploit Lookup")
-        print(f" [4] LAUNCH INSTALLED TOOLS TERMINAL")
-        print(f" [5] VIEW INTERCEPTED ERROR LOGS (BUGLIST)")
+        print(f" [4] {GREEN}LAUNCH INSTALLED TOOLS TERMINAL{RESET}")
+        print(f" [5] {RED}VIEW INTERCEPTED ERROR LOGS (BUGLIST){RESET}")
         print(f" [0] Terminate Session")
         print(f"{ORANGE}============================================={RESET}")
         
@@ -21,7 +24,8 @@ def main_menu():
                 engine.display_categories()
                 cat_choice = input(f"\n{ORANGE}Select target module (0 to exit): {RESET}").strip()
                 if cat_choice == "0": break
-                try: engine.manage_tool(int(cat_choice))
+                try:
+                    engine.manage_tool(int(cat_choice))
                 except ValueError: pass
         elif choice == "2": engine.scan_and_list_online_tools()
         elif choice == "3":
@@ -29,7 +33,8 @@ def main_menu():
             if keyword: engine.fetch_live_vulnerabilities(keyword)
         elif choice == "4": engine.launch_tool_interface()
         elif choice == "5": engine.view_buglist()
-        elif choice == "0": print(f"{RED}[*] Disconnecting engine terminals.{RESET}"); sys.exit(0)
+        elif choice == "0": 
+            print(f"{RED}[*] Disconnecting engine terminals.{RESET}"); sys.exit(0)
 
 if __name__ == "__main__":
     main_menu()

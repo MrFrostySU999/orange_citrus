@@ -23,5 +23,10 @@
         "timestamp": "2026-06-25 05:14:04",
         "tool": "Sherlock",
         "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'sherlock/sherlock.py', '--help']' returned non-zero exit status 2."
+    },
+    {
+        "timestamp": "2026-06-25 05:23:53",
+        "tool": "Sherlock [Expansion]",
+        "error": "Command '['/data/data/com.termux/files/usr/bin/python', 'sherlock_project/sherlock.py', '--help']' returned non-zero exit status 1."
     }
 ]
