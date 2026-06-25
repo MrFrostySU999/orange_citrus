@@ -158,5 +158,10 @@
         "timestamp": "2026-06-25 06:39:26",
         "tool": "Nmap",
         "error": "[Errno 2] No such file or directory: 'nmap'"
+    },
+    {
+        "timestamp": "2026-06-25 06:39:33",
+        "tool": "Nikto",
+        "error": "Command '['perl', 'nikto.pl', '-Help']' returned non-zero exit status 2."
     }
 ]
