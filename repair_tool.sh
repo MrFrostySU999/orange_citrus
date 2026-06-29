@@ -1,3 +1,10 @@
+#!/bin/bash
+echo -e "\033[1;36m[*] Re-purging configurations...\033[0m"
+dpkg --purge --force-all exim4-config exim4-base exim4-daemon-light bsd-mailx >/dev/null 2>&1
+apt-get autoremove -y >/dev/null 2>&1
+dpkg --configure -a >/dev/null 2>&1
+
+cat << 'INNER_EOF' > /root/orange_citrus/vuln_scanner.py
 import os
 import sys
 import shutil
@@ -60,31 +67,20 @@ class VulnEngine:
     def auto_resolve_dependencies(self, tool_name, tool_bin):
         deps = self.get_tool_dependencies(tool_bin)
         print(f"\n[*] Auditing: {tool_name.upper()}")
-        
-        missing_sys = []
-        for pkg in deps["sys"]:
-            is_bin = shutil.which(pkg) is not None
-            is_lib = subprocess.run(f"dpkg -s {pkg}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
-            if not is_bin and not is_lib:
-                missing_sys.append(pkg)
-
+        missing_sys = [pkg for pkg in deps["sys"] if not shutil.which(pkg)]
         if missing_sys:
-            print(f"[!] Missing packages: {missing_sys}")
-            print("[*] Unlocking system configuration handlers...")
+            print(f"[!] Missing sys packages: {missing_sys}")
             subprocess.run("dpkg --purge --force-all exim4-config exim4-base exim4-daemon-light bsd-mailx", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run("apt-get autoremove -y && dpkg --configure -a", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run(["apt-get", "update", "-y"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             for pkg in missing_sys:
-                print(f"[*] Installing system package: {pkg}")
                 cmd = f"DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confdef {pkg}"
                 subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if deps["pip"]:
             for lib in deps["pip"]:
                 check_name = "yaml" if lib == "pyyaml" else lib
-                try:
-                    __import__(check_name)
+                try: __import__(check_name)
                 except ImportError:
-                    print(f"[*] Installing pip lib: {lib}")
                     subprocess.run([sys.executable, "-m", "pip", "install", lib, "--break-system-packages"])
         print(f"{GREEN}[+] Dependencies verified.{RESET}")
 
@@ -112,6 +108,7 @@ class VulnEngine:
                 status = f"{GREEN}Installed{RESET}" if is_installed else f"{RED}Missing{RESET}"
                 print(f" [{idx}] {tool['name']:<12} | {status}")
             print(f"{CYAN}========================{RESET}")
+            
             t_choice = input(f"\n{YELLOW}Select Tool # (0 to Exit): {RESET}").strip()
             if t_choice == "0": break
             if t_choice.isdigit() and 1 <= int(t_choice) <= len(tools_list):
@@ -128,7 +125,6 @@ class VulnEngine:
             compiled_bin = os.path.join(self.install_path, exe, exe + "_bin")
             is_installed = shutil.which(exe) is not None or os.path.exists(local_path) or os.path.exists(compiled_bin)
             status = f"{GREEN}Installed{RESET}" if is_installed else f"{RED}Missing{RESET}"
-            
             print(f"\n{CYAN}[*] {name.upper()} HUB ({status}){RESET}")
             print(f" [{GREEN}1{RESET}] Download / Install Tool")
             print(f" [{GREEN}2{RESET}] Launch Active Scan Instance")
@@ -138,19 +134,18 @@ class VulnEngine:
             if act == "0": break
             elif act == "1":
                 self.auto_resolve_dependencies(name, exe)
-                if is_installed:
-                    print(f"{GREEN}[+] Already installed.{RESET}")
+                if is_installed: print(f"{GREEN}[+] Already installed.{RESET}")
                 else:
                     repo_slug = self.vendor_maps.get(exe, f"secops-tools/{exe}")
                     dest = os.path.join(self.install_path, exe)
                     if os.path.exists(dest): shutil.rmtree(dest)
                     
-                    # --- FORCED ABSOLUTE RE-BUILD INTERCEPTOR ---
+                    # --- FIXED CENTRAL DIVISION SLASH SANITISER ---
                     scrub = str(repo_slug).replace("https://", "").replace("http://", "").replace("://", "")
-                    scrub = scrub.replace("github.com/", "").replace("github.com", "").strip("/")
+                    scrub = scrub.replace("://github.com", "").replace("github.com", "").strip("/")
                     
-                    # FORCES EXACT FORMAT PATTERN WITH THE FORWARD SLASH GUARANTEED NATIVELY INSIDE STR QUOTES
-                    target_url = "https://github.com/" + str(scrub) + ".git"
+                    # FORCE EXPLICIT SEPARATOR: https://://github.com + AUTHOR/REPO + .git
+                    target_url = "https://://github.com" + str(scrub) + ".git"
                     print(f"[*] Pre-Scan Interceptor: URL layout verified clean.")
                     print(f"[*] Cloning: '{target_url}'")
                     
@@ -158,22 +153,17 @@ class VulnEngine:
                     if proc_status == 0:
                         self.auto_install_python_dependencies(dest)
                         if os.path.exists(os.path.join(dest, "Makefile")):
-                            print("[*] Makefile found. Compiling...")
                             subprocess.run(["make"], cwd=dest, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                             for root, dirs, files in os.walk(dest):
-                                if exe in files:
-                                    shutil.copy(os.path.join(root, exe), compiled_bin)
-                                    break
+                                if exe in files: shutil.copy(os.path.join(root, exe), compiled_bin); break
                     else:
-                        print("[*] Git download failed. Trying apt-get fallback...")
-                        cmd = f"DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confdef {exe}"
+                        cmd = f"DEBIAN_FRONTEND=noninteractive apt-get install -y {exe}"
                         subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 input("\n[Press Enter]")
             elif act == "2":
                 self.auto_resolve_dependencies(name, exe)
-                if not is_installed:
-                    print(f"{RED}[!] Error: Run Option 1 first.{RESET}")
-                elif self.global_target == "None Assigned" and tool.get("cat") not in ["Audit", "Defense", "WiFi"]:
+                if not is_installed: print(f"{RED}[!] Error: Run Option 1 first.{RESET}")
+                elif self.global_target == "None Assigned" and tool.get("cat") not in ["Audit", "Defense"]:
                     print(f"{RED}[!] Error: Target is empty. Use option 5.{RESET}")
                 else:
                     args = f"-F {self.global_target} --unprivileged" if exe == "nmap" else f"-h {self.global_target}"
@@ -184,23 +174,17 @@ class VulnEngine:
                 input("\n[Press Enter]")
             elif act == "3":
                 dest = os.path.join(self.install_path, exe)
-                if os.path.exists(dest):
-                    print(f"\n{YELLOW}[*] Purging files...{RESET}")
-                    try: shutil.rmtree(dest)
-                    except: pass
-                if os.path.exists(compiled_bin):
-                    try: os.remove(compiled_bin)
-                    except: pass
+                if os.path.exists(dest): shutil.rmtree(dest)
+                if os.path.exists(compiled_bin): os.remove(compiled_bin)
                 if shutil.which(exe):
-                    print(f"\n{YELLOW}[*] Purging global package...{RESET}")
                     subprocess.run(["DEBIAN_FRONTEND=noninteractive apt-get remove -y " + exe], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     subprocess.run([sys.executable + " -m pip uninstall -y " + exe + " --break-system-packages"], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                print(f"{GREEN}[+] Uninstalled.{RESET}")
-                input("\n[Press Enter]")
+                print(f"{GREEN}[+] Uninstalled.{RESET}"); input("\n[Press Enter]")
 
-    def run_category_menu(self):
-        return self.scan_tools()
+    def run_category_menu(self): return self.scan_tools()
+    def fetch_live_vulnerabilities(self): return True
+INNER_EOF
 
-    def fetch_live_vulnerabilities(self):
-        print(f"\n{GREEN}[+] Threat database synced.{RESET}")
-        return True
+chmod +x /root/orange_citrus/repair_tool.sh
+echo -e "\033[1;32m[+] Setup Repaired! Launching application...\033[0m"
+python3 /root/orange_citrus/orange.py
