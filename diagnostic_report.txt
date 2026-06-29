@@ -1,0 +1,14 @@
+=== ORANGE CITRUS DIAGNOSTIC REPORT ===
+Python Version: 3.13.14 (main, Jun 10 2026, 18:10:12) [GCC 15.2.0]
+Found Python files: ['config.py', 'orange.py', 'tools_manager.py', 'vuln_scanner.py', 'diagnose.py']
+
+Methods orange.py tries to call on 'engine':
+  ['run_category_menu', 'fetch_live_vulnerabilities', 'scan_tools']
+
+--- File: config.py ---
+
+--- File: tools_manager.py ---
+
+--- File: vuln_scanner.py ---
+Class found: VulnEngine
+  Defined methods: ['__init__', 'check_installed', 'fix_package_locks', 'auto_install_python_dependencies', 'set_global_target', 'scan_tools']

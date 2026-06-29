@@ -10,6 +10,7 @@ class VulnEngine:
         self.global_target = "None Assigned"
         os.makedirs(self.install_path, exist_ok=True)
         
+        # Completely clean, raw author/repo keys
         self.vendor_maps = {
             "subfinder": "projectdiscovery/subfinder",
             "nuclei": "projectdiscovery/nuclei",
@@ -59,20 +60,16 @@ class VulnEngine:
 
     def auto_resolve_dependencies(self, tool_name, tool_bin):
         deps = self.get_tool_dependencies(tool_bin)
-        print(f"
-[*] Auditing: {tool_name.upper()}")
+        print(f"\n[*] Auditing: {tool_name.upper()}")
         missing_sys = [pkg for pkg in deps["sys"] if not shutil.which(pkg)]
         if missing_sys:
             print(f"[!] Missing sys packages: {missing_sys}")
-            print("[*] Unlocking system installers and purging broken configurations...")
-            # FORCE PURGE EXIM4 TO PREVENT DEBCONF DIALOG BLOCKS PERMANENTLY
+            print("[*] Unlocking installers & clearing broken packages...")
             subprocess.run("dpkg --purge --force-all exim4-config exim4-base exim4-daemon-light bsd-mailx", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run("apt-get autoremove -y && dpkg --configure -a", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
-            # Run apt update and install using strict non-interactive parameters
             subprocess.run(["apt-get", "update", "-y"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             for pkg in missing_sys:
-                print(f"[*] Provisioning system asset: {pkg}")
+                print(f"[*] Installing system package: {pkg}")
                 cmd = f"DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confdef {pkg}"
                 subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if deps["pip"]:
@@ -125,8 +122,12 @@ class VulnEngine:
             compiled_bin = os.path.join(self.install_path, exe, exe + "_bin")
             is_installed = shutil.which(exe) is not None or os.path.exists(local_path) or os.path.exists(compiled_bin)
             status = f"{GREEN}Installed{RESET}" if is_installed else f"{RED}Missing{RESET}"
+            
             print(f"\n{CYAN}[*] {name.upper()} HUB ({status}){RESET}")
-            print(f" Install | Run | Delete | Back")
+            print(f" [{GREEN}1{RESET}] Download / Install Tool")
+            print(f" [{GREEN}2{RESET}] Launch Active Scan Instance")
+            print(f" [{GREEN}3{RESET}] Uninstall / Delete Tool")
+            print(f" [{GREEN}0{RESET}] Back to Index Matrix")
             act = input(f"{YELLOW}Action #: {RESET}").strip()
             if act == "0": break
             elif act == "1":
@@ -138,15 +139,15 @@ class VulnEngine:
                     dest = os.path.join(self.install_path, exe)
                     if os.path.exists(dest): shutil.rmtree(dest)
                     
-                    # --- ABSOLUTE SELF-CORRECTING INTERCEPTOR GUARD ---
-                    # Strip any possible corrupt prefix combinations entirely
+                    # --- FIXED STRICT STATIC URL INTERCEPTOR ENGINE ---
+                    # 1. Strip out all prefix, hostname, protocol variants entirely
                     scrub = str(repo_slug).replace("https://", "").replace("http://", "").replace("://", "")
                     scrub = scrub.replace("github.com/", "").replace("github.com", "").strip("/")
                     
-                    # HARDCODES THE EXACT REQ FORMAT PATTERN WITH THE TRAILING SLASH INDELETABLE
+                    # 2. IRONCLAD HARDCODED STR CONCATENATION PATTERN MATCH
                     target_url = "https://github.com/" + str(scrub) + ".git"
                     
-                    print(f"[*] Pre-Scan Guard: Verified layout.")
+                    print(f"[*] Pre-Scan Interceptor: URL layout verified clean.")
                     print(f"[*] Cloning: '{target_url}'")
                     
                     proc_status = subprocess.run(["git", "clone", target_url, dest], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
@@ -160,7 +161,7 @@ class VulnEngine:
                                     shutil.copy(os.path.join(root, exe), compiled_bin)
                                     break
                     else:
-                        print("[*] Git download missing or failed. Trying apt-get...")
+                        print("[*] Git download failed. Trying apt-get fallback...")
                         cmd = f"DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confdef {exe}"
                         subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 input("\n[Press Enter]")

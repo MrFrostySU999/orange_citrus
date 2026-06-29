@@ -1,0 +1,80 @@
+import os
+import sys
+import time
+import requests
+import json
+import shutil
+import subprocess
+from config import ORANGE, RED, GREEN, CYAN, YELLOW, BLUE, WHITE, RESET, DATABASE
+
+class VulnEngine:
+    def __init__(self):
+        self.headers = {'User-Agent': 'Mozilla/5.0'}
+        self.install_path = os.path.expanduser("~/orange_tools")
+        self.history_file = os.path.expanduser("~/orange_v1/vuln_history.json")
+        self.bug_file = os.path.expanduser("~/orange_v1/buglist.json")
+        self.global_target = "None Assigned"
+        os.makedirs(self.install_path, exist_ok=True)
+        os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
+        
+        self.vendor_maps = {
+            "subfinder": "projectdiscovery/subfinder", "nuclei": "projectdiscovery/nuclei", "amass": "owasp-amass/amass",
+            "wfuzz": "xmendez/wfuzz", "gau": "lc/gau", "recon-ng": "lanmaster53/recon-ng", "theharvester": "laramies/theHarvester",
+            "sherlock": "sherlock-project/sherlock", "spiderfoot": "smicallef/spiderfoot", "phoneinfoga": "sundowndev/phoneinfoga",
+            "dirsearch": "maurosoria/dirsearch", "gobuster": "OJ/gobuster", "whatweb": "urbanadventurer/WhatWeb",
+            "nikto": "sullo/nikto", "sqlmap": "sqlmapproject/sqlmap", "commix": "commixproject/commix", "wapiti": "wapiti-scanner/wapiti",
+            "arachni": "Arachni/arachni", "xsser": "epsylon/xsser", "photon": "s0md3v/Photon", "wpscan": "wpscanteam/wpscan",
+            "droopescan": "droope/droopescan", "joomscan": "rezasp/joomscan", "lfisuite": "D35HA/LFIsuite", "striker": "s0md3v/Striker",
+            "masscan": "robertdavidgraham/masscan", "nmap-parser": "vondis/nmap-parser", "infoga": "m4ll0k/Infoga",
+            "sublist3r": "aboul3la/Sublist3r", "datasploit": "datasploit/datasploit", "cloudfail": "m0rtem/CloudFail",
+            "finalrecon": "thewhiteh4t/FinalRecon", "ghunt": "mxrch/GHunt", "dnsrecon": "darkoperator/dnsrecon",
+            "knockpy": "guelfoweb/knock", "trufflehog": "trufflesecurity/trufflehog", "chiron": "ickerami/Chiron",
+            "spaghetti": "m4ll0k/Spaghetti", "sn1per": "1N3/Sn1per", "katana": "projectdiscovery/katana",
+            "routersploit": "threat9/routersploit", "slowloris": "gkbrk/slowloris", "xsstrike": "s0md3v/XSStrike",
+            "linkfinder": "GerbenJavado/LinkFinder", "secretfinder": "m4ll0k/SecretFinder", "arjun": "s0md3v/Arjun",
+            "gitdumper": "arthaud/git-dumper", "sslscan": "rbsec/sslscan", "testssl": "drwetter/testssl.sh",
+            "massdns": "blechschmidt/massdns", "dalfox": "hahwul/dalfox", "holehe": "megadose/holehe", "maigret": "soxoj/maigret",
+            "peass-ng": "peass-ng/PEASS-ng", "chisel": "jpillora/chisel", "responder": "lgandx/Responder",
+            "bloodhound": "BloodHoundAD/BloodHound", "crackmapexec": "byt3bl33d3r/CrackMapExec",
+            "payloadallthethings": "swisskyrepo/PayloadsAllTheThings", "seclists": "danielmiessler/SecLists",
+            "aircrack-ng": "aircrack-ng/aircrack-ng", "wifite2": "kimocoder/wifite2", "fluxion": "FluxionNetwork/fluxion",
+            "airgeddon": "v1s1t0r1sh3r1f/airgeddon"
+        }
+        
+    def check_installed(self, tool_data):
+        if tool_data["type"] == "apt":
+            return shutil.which(tool_data['pkg']) is not None or os.path.exists(f"/usr/bin/{tool_data['pkg']}")
+        elif tool_data["type"] == "git":
+            return os.path.exists(os.path.join(self.install_path, tool_data["dir"]))
+        return False
+
+    def fix_package_locks(self):
+        broken = ["sudo", "tcpdump", "openssh-client", "openssh-server", "rpcbind", "nfs-common", "systemd", "dbus", "dbus-daemon", "dbus-system-bus-common"]
+        for pkg in broken:
+            postinst = f"/var/lib/dpkg/info/{pkg}.postinst"
+            if os.path.exists(postinst):
+                try:
+                    with open(postinst, 'w') as f: f.write("#!/bin/sh\nexit 0")
+                except: pass
+        subprocess.run(["dpkg", "--configure", "-a"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def auto_install_python_dependencies(self, tool_dir):
+        req_file = os.path.join(tool_dir, "requirements.txt")
+        setup_file = os.path.join(tool_dir, "setup.py")
+        if os.path.exists(req_file):
+            print(f"{YELLOW}[*] Parsing runtime maps. Syncing pip packages...{RESET}")
+            subprocess.run([sys.executable, "-m", "pip", "install", "-r", req_file])
+        elif os.path.exists(setup_file):
+            print(f"{YELLOW}[*] Launching system configuration pipeline setups...{RESET}")
+            subprocess.run([sys.executable, setup_file, "install"])
+
+    def set_global_target(self):
+        print(f"\n{CYAN}=== TARGET DESTINATION ACQUISITION BINDING ==={RESET}")
+        print(f"Current Target Scope context: {GREEN}{self.global_target}{RESET}")
+        tgt = input("Enter target value (IP/CIDR/Domain mapping strings): ").strip()
+        if tgt:
+            self.global_target = tgt
+            print(f"{GREEN}[+] Framework binding assigned: {self.global_target}{RESET}")
+        else:
+            print(f"{YELLOW}[*] Changes aborted.{RESET}")
+        input("\nPress [Enter] to return...")
