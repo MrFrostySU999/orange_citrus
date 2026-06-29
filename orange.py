@@ -73,11 +73,9 @@ def main_menu():
             input(f"\n{YELLOW}Press Enter to return to main menu...{RESET}")
 
         elif choice == "3":
-            if hasattr(engine, 'fetch_live_vulnerabilities'):
-                engine.fetch_live_vulnerabilities()
-            else:
-                print(f"{CYAN}[*] Fetching live upstream exploit signatures...{RESET}")
-            input(f"\n{YELLOW}Press Enter to return to main menu...{RESET}")
+            # Fire separate file structure directly to completely insulate vuln_scanner parameters
+            import subprocess
+            subprocess.run([sys.executable, "/root/orange_citrus/exploit_lookup.py"])
 
         elif choice == "4":
             print(f"\n{CYAN}--- CROSS-TOOL AUDIT COMPARISON MATRIX ---{RESET}")

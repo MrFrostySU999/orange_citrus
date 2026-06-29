@@ -2,10 +2,12 @@ import os
 import sys
 import shutil
 import subprocess
+import requests
 from config import ORANGE, RED, GREEN, CYAN, YELLOW, BLUE, WHITE, RESET
 
 class VulnEngine:
     def __init__(self):
+        self.headers = {'User-Agent': 'Mozilla/5.0'}
         self.install_path = os.path.expanduser("~/orange_tools")
         self.global_target = "None Assigned"
         os.makedirs(self.install_path, exist_ok=True)
@@ -70,7 +72,7 @@ class VulnEngine:
 
         if missing_sys:
             print(f"[!] Missing packages: {missing_sys}")
-            print("[*] Unlocking system configuration handlers...")
+            print("[*] Unlocking system configurations...")
             subprocess.run("dpkg --purge --force-all exim4-config exim4-base exim4-daemon-light bsd-mailx", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run("apt-get autoremove -y && dpkg --configure -a", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run(["apt-get", "update", "-y"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -145,12 +147,11 @@ class VulnEngine:
                     dest = os.path.join(self.install_path, exe)
                     if os.path.exists(dest): shutil.rmtree(dest)
                     
-                    # --- FORCED ABSOLUTE RE-BUILD INTERCEPTOR ---
+                    # --- FIXED STATIC STRING URL REALIGNMENT ---
                     scrub = str(repo_slug).replace("https://", "").replace("http://", "").replace("://", "")
-                    scrub = scrub.replace("github.com/", "").replace("github.com", "").strip("/")
+                    scrub = scrub.replace("://github.com", "").replace("github.com", "").strip("/")
                     
-                    # FORCES EXACT FORMAT PATTERN WITH THE FORWARD SLASH GUARANTEED NATIVELY INSIDE STR QUOTES
-                    target_url = "https://github.com/" + str(scrub) + ".git"
+                    target_url = "https://://github.com" + str(scrub) + ".git"
                     print(f"[*] Pre-Scan Interceptor: URL layout verified clean.")
                     print(f"[*] Cloning: '{target_url}'")
                     
@@ -198,9 +199,36 @@ class VulnEngine:
                 print(f"{GREEN}[+] Uninstalled.{RESET}")
                 input("\n[Press Enter]")
 
+    def fetch_live_vulnerabilities(self):
+        print(f"\n{CYAN}=== LIVE LOOKUP ==={RESET}")
+        kw = input(f"{YELLOW}Keyword: {RESET}").strip()
+        if not kw:
+            print(f"{RED}[-] Keyword req.{RESET}")
+            return True
+        print(f"[*] Querying indices: {kw}...")
+        url = f"https://circl.lu{kw}"
+        try:
+            res = requests.get(url, headers=self.headers, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                res_list = data.get('results', data) if isinstance(data, dict) else data
+                if not res_list:
+                    print(f"{YELLOW}[*] No threats found.{RESET}")
+                    return True
+                print(f"\n{ORANGE}Latest Live Threats Matches:{RESET}")
+                print(f"{BLUE}------------------------------{RESET}")
+                for item in res_list[:10]:
+                    cve_id = item.get('id', 'Unknown CVE')
+                    summary = item.get('summary', 'No desc.')
+                    score = item.get('cvss', 'N/A')
+                    print(f" {GREEN}• {cve_id}{RESET} [CVSS: {YELLOW}{score}{RESET}]")
+                    print(f"   {WHITE}{summary[:80]}...{RESET}\n")
+                print(f"{BLUE}------------------------------{RESET}")
+            else:
+                print(f"{RED}[-] HTTP Error: {res.status_code}{RESET}")
+        except Exception as e:
+            print(f"{RED}[!] Remote Fault: {e}{RESET}")
+        return True
+
     def run_category_menu(self):
         return self.scan_tools()
-
-    def fetch_live_vulnerabilities(self):
-        print(f"\n{GREEN}[+] Threat database synced.{RESET}")
-        return True
